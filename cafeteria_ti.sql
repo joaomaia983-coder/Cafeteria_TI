@@ -1,6 +1,7 @@
 CREATE DATABASE IF NOT EXISTS cafeteria_ti;
 USE cafeteria_ti;
 
+DROP TABLE IF EXISTS item_pedido;
 DROP TABLE IF EXISTS pedido;
 DROP TABLE IF EXISTS funcionario;
 DROP TABLE IF EXISTS cliente;
@@ -31,13 +32,20 @@ CREATE TABLE funcionario (
 CREATE TABLE pedido (
 	id_pedido INT PRIMARY KEY AUTO_INCREMENT,
 	id_cliente INT NOT NULL,
-    id_produto INT NOT NULL,
     id_funcionario INT NOT NULL,
-    quantidade INT NOT NULL,
     data_pedido DATE,
     FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
-    FOREIGN KEY (id_produto) REFERENCES produto(id_produto),
     FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario)
+);
+
+CREATE TABLE item_pedido (
+	id_item INT PRIMARY KEY AUTO_INCREMENT,
+    id_pedido INT NOT NULL,
+    id_produto INT NOT NULL,
+	quantidade INT NOT NULL,
+    preco_unitario decimal(6,2) NOT NULL,
+    FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido),
+    FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
 );
 
 INSERT INTO produto (nome, categoria, preco) VALUES
@@ -58,25 +66,32 @@ INSERT INTO funcionario (nome, cargo, data_admissao, salario) VALUES
  ('Alice Almeida', 'Caixa', '2026-01-22', 2200.00),
  ('João Maia', 'Gerente', '2026-01-06', 4500.00);
 
- INSERT INTO pedido (id_cliente, id_produto, id_funcionario, quantidade, data_pedido) VALUES
- (1, 1, 1, 2, '2026-11-01'),
- (1, 4, 1, 1, '2026-11-01'),
- (2, 3, 2, 1, '2026-11-02'),
- (3, 2, 3, 3, '2026-11-02'),
- (4, 1, 3, 1, '2026-11-02'),
- (2, 4, 2, 2, '2026-11-02');
+ INSERT INTO pedido (id_cliente, id_funcionario, data_pedido) VALUES
+ (1, 1, '2026-11-01'),
+(2, 2, '2026-11-02'),
+(3, 3, '2026-11-02'),
+(4, 3, '2026-11-02');
+ 
+ INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario) VALUES
+ (1, 1, 2, 8.50),
+ (1, 4, 1, 6.50),
+ (2, 3, 1, 12.00),
+ (2, 4, 2, 6.50),
+ (3, 2, 3, 7.00),
+ (4, 1, 1, 8.50);
  
  SELECT * FROM produto;
  
- SELECT c.nome AS cliente, p.nome AS produto, pe.quantidade, pe.data_pedido
+ SELECT pe.id_pedido, c.nome AS cliente, p.nome AS produto, i.quantidade, pe.data_pedido
  FROM pedido pe
  INNER JOIN cliente c ON pe.id_cliente = c.id_cliente
- INNER JOIN produto p ON pe.id_produto = p.id_produto;
+ INNER JOIN item_pedido i ON i.id_pedido = pe.id_pedido
+ INNER JOIN produto p ON i.id_produto = p.id_produto;
  
- SELECT c.nome, SUM(pe.quantidade * p.preco) AS total_gasto
+ SELECT c.nome, SUM(i.quantidade * i.preco_unitario) AS total_gasto
  FROM pedido pe
  INNER JOIN cliente c ON pe.id_cliente = c.id_cliente
- INNER JOIN produto p ON pe.id_produto = p.id_produto
+ INNER JOIN item_pedido i ON i.id_pedido = pe.id_pedido
  GROUP BY c.nome;
  
  SELECT AVG(preco) AS preco_medio FROM produto;
@@ -89,7 +104,8 @@ INSERT INTO funcionario (nome, cargo, data_admissao, salario) VALUES
         f.nome AS atendido_por
 FROM pedido pe
 INNER JOIN cliente c ON pe.id_cliente = c.id_cliente
-INNER JOIN produto p ON pe.id_produto = p.id_produto
+INNER JOIN item_pedido i ON i.id_pedido = pe.id_pedido
+INNER JOIN produto p ON i.id_produto = p.id_produto
 INNER JOIN funcionario f ON pe.id_funcionario = f.id_funcionario;
 
 SELECT f.nome AS funcionario,

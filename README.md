@@ -4,7 +4,7 @@ Projeto de banco de dados de uma cafeteria pensada para quem trabalha com tecnol
 
 ## Sobre o projeto
 
-Fiz esse banco de dados para praticar SQL. A ideia é uma cafeteria que vende para o pessoal da area de TI, por isso os produtos têm nomes de programação, como **Café Debug** e **Cookie Cache**.
+Fiz esse banco de dados para praticar SQL. A ideia é uma cafeteria que vende para o pessoal da area de TI, por isso os produtos têm nomes divertidos, como **Café Debug** e **Cookie Cache**.
 
 ## Tabelas
 
@@ -14,6 +14,7 @@ Fiz esse banco de dados para praticar SQL. A ideia é uma cafeteria que vende pa
 | `produto` | O que a cafeteria vende (nome, categoria, preço) |
 | `funcionario` | Quem trabalha na cafeteria (nome, cargo, data de admissão, salário) |
 | `pedido` | Cada compra, ligando um cliente, um produto e o funcionário que atendeu (quantidade e data) |
+| `item_pedido` | Quais produtos fazem parte de cada pedido, a quantidade e o preço no dia da compra |
 
 ## Como as tabelas se relacionam
 
@@ -49,18 +50,19 @@ funcionario  1 ──── N  pedido
 
 **Ver os pedidos com o nome do cliente e do produto:**
 ```sql
-SELECT c.nome AS cliente, p.nome AS produto, pe.quantidade, pe.data_pedido
+SELECT pe.id_pedido, c.nome AS cliente, p.nome AS produto, i.quantidade, pe.data_pedido
 FROM pedido pe
 INNER JOIN cliente c ON pe.id_cliente = c.id_cliente
-INNER JOIN produto p ON pe.id_produto = p.id_produto;
+INNER JOIN item_pedido i ON i.id_pedido = pe.id_pedido
+INNER JOIN produto p ON i.id_produto = p.id_produto;
 ```
 
 **Total gasto por cliente:**
 ```sql
-SELECT c.nome, SUM(pe.quantidade * p.preco) AS total_gasto
+SELECT c.nome, SUM(i.quantidade * i.preco_unitario) AS total_gasto
 FROM pedido pe
 INNER JOIN cliente c ON pe.id_cliente = c.id_cliente
-INNER JOIN produto p ON pe.id_produto = p.id_produto
+INNER JOIN item_pedido i ON i.id_pedido = pe.id_pedido
 GROUP BY c.nome;
 ```
 
@@ -71,19 +73,25 @@ FROM funcionario f
 INNER JOIN pedido pe ON pe.id_funcionario = f.id_funcionario
 GROUP BY f.nome;
 ```
-
 ## O que aprendi
 
 - Eu achava que dava para colocar tudo numa tabela só, mas separar em cliente, produto e pedido deixa tudo bem mais organizado.
 - A ordem de criação importa. Se tentar inserir um pedido antes de ter o cliente e o produto, dará erro.
 - Aprendi que o INNER JOIN só mostra as linhas que têm correspondência nas duas tabelas. Se um pedido não tivesse funcionário, ele sumiria do resultado.
+- Com a tabela item_pedido, um pedido passou a ter vários produtos, como uma comanda. Ela guarda o preco_unitario para o pedido antigo não mudar se o preço do produto for atualizado.
+- Ao mudar a estrutura, os SELECTs antigos deram erro e tive que ajustar os JOINs. Também aprendi que, para apagar, o item_pedido vem primeiro no DROP TABLE, porque depende do pedido.
 - Ainda preciso praticar mais o GROUP BY.
 
 ## Ideias para o futuro
 
-- Permitir vários produtos no mesmo pedido (hoje cada pedido aceita só um).
-- Adicionar um controle de estoque, para acompanhar a saída dos produtos.
-- Mais para frente, quero tentar conectar esse banco ao meu site "Café & Código", quando eu aprender o suficiente para isso.
+## Próximos passos
+
+- [x] Tabela de funcionários
+- [x] Vários produtos por pedido (tabela item_pedido)
+- [ ] Controle de estoque dos produtos
+- [ ] Tabela de forma de pagamento (Pix, cartão, dinheiro)
+- [ ] Coluna de status do pedido (aberto, pronto, entregue)
+- [ ] Conectar o banco ao site **Café & Código**, claro que somente quando eu aprender o suficiente para isso.
 
 ## Autor
 
